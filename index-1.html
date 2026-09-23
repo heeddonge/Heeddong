@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="채팅 지문에 기울임·대사 색·굵게·형광펜 서식을 입혀 이미지로 저장하는 발췌기">
+<style>html{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>지문 발췌기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Sans+KR:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Gowun+Batang:wght@400;700&display=swap">
+<style>
+:root{
+  --ground:#EDF1F2; --panel:#FFFFFF; --ink:#1D2528; --muted:#667479; --line:#D6DEE0;
+  --accent:#2C7C83; --accent-ink:#FFFFFF; --soft:#E1EEEF; --danger:#B4483A;
+  --ui:"IBM Plex Sans KR","Noto Sans KR",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#141819; --panel:#1C2224; --ink:#E4EBED; --muted:#91A0A4; --line:#2F383B;
+    --accent:#6DBEC4; --accent-ink:#0F1A1C; --soft:#23312F; --danger:#E08A7C;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#141819; --panel:#1C2224; --ink:#E4EBED; --muted:#91A0A4; --line:#2F383B;
+  --accent:#6DBEC4; --accent-ink:#0F1A1C; --soft:#23312F; --danger:#E08A7C;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--ui);font-size:14px;padding:0 16px;}
+.wrap{max-width:1240px;margin:0 auto;padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
+header{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+header h1{font-size:20px;font-weight:600;margin:0;letter-spacing:-.01em}
+header p{margin:0;color:var(--muted);font-size:13px}
+.legend{display:flex;gap:6px;flex-wrap:wrap;font-size:12px}
+.legend span{padding:2px 8px;border-radius:4px;background:var(--panel);border:1px solid var(--line)}
+.lg-n{font-style:italic}.lg-d{color:#6E9EBF}.lg-b{font-weight:700}.lg-h{background:linear-gradient(transparent 10%,#C3E3E3 10%)!important;color:#1D2528}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.pane{background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;min-width:0}
+.pane-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.pane-h h2{font-size:13px;font-weight:600;margin:0;color:var(--muted);letter-spacing:.04em}
+.tools{display:flex;gap:6px;flex-wrap:wrap}
+button,select,input[type=color]{font:inherit;color:inherit}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px;line-height:1.2}
+.btn:hover{border-color:var(--accent)}
+.btn:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn[disabled]{opacity:.5;cursor:default}
+.t-b{font-weight:700}.t-h{background:linear-gradient(transparent 15%,#C3E3E3 15%);color:#1D2528}
+textarea{width:100%;min-height:520px;resize:vertical;border:0;background:transparent;padding:14px;font:15px/1.8 var(--ui);color:var(--ink)}
+textarea:focus{outline:none}
+.hint{padding:10px 12px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.6}
+.hint code{font-family:ui-monospace,Menlo,monospace;background:var(--soft);padding:1px 4px;border-radius:3px}
+.howto{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--soft);font-size:13px}
+.howto code.k{display:inline-block;min-width:2.2em;text-align:center;font:600 13px ui-monospace,Menlo,monospace;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-right:4px}
+.howto-sub{font-size:12px;color:var(--muted);line-height:1.6}
+.howto-sub code{font-family:ui-monospace,Menlo,monospace;background:var(--panel);padding:1px 4px;border-radius:3px}
+.opts{display:flex;gap:10px 14px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted);align-items:center}
+.opts label{display:flex;align-items:center;gap:6px}
+.opts select{border:1px solid var(--line);border-radius:5px;background:var(--panel);padding:3px 4px;font-size:12px}
+.opts input[type=color]{width:26px;height:22px;border:1px solid var(--line);border-radius:4px;padding:0;background:none;cursor:pointer}
+.stage{padding:16px;overflow:auto;max-height:78vh;background:repeating-conic-gradient(var(--ground) 0 25%,transparent 0 50%) 0 0/16px 16px}
+
+/* ---------- the excerpt card (exported) ---------- */
+.card{--c-bg:#FFFFFF;--c-ink:#3B3F42;--c-strong:#1E2124;--c-dlg:#6E9EBF;--c-hl:#C3E3E3;--c-hl-ink:#2A3033;
+  background:var(--c-bg);color:var(--c-ink);padding:44px 40px;font-size:16px;line-height:1.95;word-break:keep-all;overflow-wrap:anywhere;
+  font-family:"Noto Sans KR",system-ui,sans-serif;max-width:600px;margin:0 auto}
+.card.dark{--c-bg:#1B1E21;--c-ink:#C9CED2;--c-strong:#F1F3F5;--c-hl-ink:#F1F3F5}
+.card p{margin:0 0 1.35em}
+.card p:last-child{margin-bottom:0}
+.card .n{font-style:italic}
+.card .d{color:var(--c-dlg);font-style:normal}
+.card b{font-weight:700;color:var(--c-strong)}
+.card .d b{color:inherit}
+.card mark{background:var(--c-hl);color:var(--c-hl-ink);padding:1px 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.card.dark mark{background:color-mix(in srgb,var(--c-hl) 38%,transparent)}
+.card .foot{margin-top:28px;font-size:11px;letter-spacing:.08em;color:color-mix(in srgb,var(--c-ink) 55%,transparent);font-style:normal;text-align:right}
+
+.results{padding:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.results[hidden]{display:none!important}
+.res-h{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.thumb{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted)}
+.thumb img{width:100%;border:1px solid var(--line);border-radius:4px;background:#fff}
+#exportHost{position:fixed;left:0;top:0;width:0;height:0;overflow:hidden;pointer-events:none}
+#exportHost .card{position:absolute;left:0;top:0;margin:0;max-width:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>지문 발췌기</h1>
+    <p>채팅 지문을 붙여넣으면 서식을 입혀 이미지로 저장해요.</p>
+    <div class="legend" aria-label="서식 범례">
+      <span class="lg-n">지문 = 기울임</span><span class="lg-d">대사 = 색상</span><span class="lg-b">-굵게-</span><span class="lg-h">=형광펜=</span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="pane" aria-label="원문">
+      <div class="pane-h">
+        <h2>원문</h2>
+        <div class="tools">
+          <button class="btn" id="btnUnmark" title="모든 -굵게- =형광펜= 표시 제거">표시 모두 지우기</button>
+          <button class="btn" id="btnClear">비우기</button>
+        </div>
+      </div>
+      <div class="howto">
+        <div><code class="k">-문장-</code> 앞뒤로 감싸면 <b>굵게</b></div>
+        <div><code class="k">=문장=</code> 앞뒤로 감싸면 <span class="t-h">형광펜</span></div>
+        <div class="howto-sub">문장 전체든 단어 몇 개든 감싼 만큼 칠해져요. <code>3-4</code>처럼 글자 사이에 붙은 기호는 그대로 둬요.</div>
+      </div>
+      <textarea id="src" spellcheck="false" aria-label="채팅 지문 입력" placeholder="여기에 채팅 지문을 붙여넣으세요."></textarea>
+      <div class="hint">
+        따옴표(<code>"</code> <code>“</code> <code>「</code>)로 시작하는 줄은 대사, 바로 아래 <code>(괄호)</code> 줄은 대사 번역으로 칠해져요. 나머지는 지문.<br>
+        <code>*행동*</code> <code>**행동**</code> 같은 별표는 지우고 지문으로 처리해요. 빈 줄로 문단을 나눠요.
+      </div>
+    </section>
+
+    <section class="pane" aria-label="미리보기">
+      <div class="pane-h">
+        <h2>미리보기</h2>
+        <div class="tools">
+          <button class="btn primary" id="btnExport">이미지로 저장</button>
+        </div>
+      </div>
+      <div class="opts">
+        <label>카드 <select id="cardTheme"><option value="light">밝게</option><option value="dark">어둡게</option></select></label>
+        <label>글꼴 <select id="font">
+          <option value='"Noto Sans KR",system-ui,sans-serif'>고딕</option>
+          <option value='"Nanum Myeongjo",serif'>명조</option>
+          <option value='"Gowun Batang",serif'>바탕</option>
+        </select></label>
+        <label>크기 <select id="size"><option>15</option><option selected>16</option><option>17</option><option>18</option></select></label>
+        <label>대사색 <input type="color" id="dlgColor" value="#6e9ebf"></label>
+        <label>형광펜 <input type="color" id="hlColor" value="#c3e3e3"></label>
+        <label><input type="checkbox" id="inlineDlg" checked> 문장 속 "대사"도 색칠</label>
+        <label>분할 <select id="split"><option value="0">한 장</option><option value="2000">긴 이미지 나누기(짧게)</option><option value="2600" selected>긴 이미지 나누기(보통)</option><option value="3600">긴 이미지 나누기(길게)</option></select></label>
+        <label>서명 <input id="sig" type="text" placeholder="예: @유유" style="width:90px;border:1px solid var(--line);border-radius:5px;background:var(--panel);padding:3px 6px;font-size:12px"></label>
+      </div>
+      <div class="stage"><div class="card" id="preview"></div></div>
+      <div class="results" id="results" hidden>
+        <div class="res-h"><span id="resInfo"></span><button class="btn" id="btnSaveAll">모두 저장</button></div>
+        <div class="thumbs" id="thumbs"></div>
+      </div>
+    </section>
+  </div>
+</div>
+<div id="exportHost" aria-hidden="true"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const src = $('src'), preview = $('preview');
+const SAMPLE = `(예시 지문 — 비우기를 누르고 붙여넣으세요)
+
+등대의 불은 자정이 지나서야 켜졌다. 바다는 검은 유리처럼 잔잔했고, -하윤은 그 위로 번지는 첫 번째 빛줄기를 말없이 바라보았다.- 책상 위에는 부치지 못한 편지 한 통이 놓여 있었다.
+
+"You kept the light on again."
+(또 불 켜 놨네.)
+
+*문을 열고 들어온 이안은 젖은 목도리를 풀었다.* 창밖으로 파도가 한 번 크게 부서졌다. =어떤 빛은 누군가를 부르기 위해서가 아니라, 기다리고 있다는 걸 잊지 않기 위해 켜 두는 것이었다.=
+
+"습관이야. 끄는 법을 잊어버렸어."
+
+하윤은 편지를 서랍 안으로 밀어 넣었다. 등대의 빛이 한 바퀴 돌아 =두 사람의 그림자를= 벽 위에 겹쳐 놓았다.`;
+
+// ---------- persistence (per-viewer convenience) ----------
+const KEY = 'excerpt-draft-v2';
+try { const s = localStorage.getItem(KEY); src.value = s != null && s.trim() ? s : SAMPLE; } catch(e){ src.value = SAMPLE; }
+let saveT;
+function persist(){ clearTimeout(saveT); saveT = setTimeout(()=>{ try{ localStorage.setItem(KEY, src.value); }catch(e){} }, 400); }
+
+// ---------- parsing ----------
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const DLG_START = /^\s*[-=]?\s*\**["“”「『‘'«]/;
+const TR_START = /^\s*[-=]?\s*\**[(（]/;
+// private-use placeholders so markers survive escaping and quote colouring
+const BO='', BC='', HO='', HC='';
+const OPEN_B = '(^|[\\s(\\[“"\'‘「『（])';
+const CLOSE_B = '(?=$|[\\s.,!?…。，？！)\\]”"\'’」』）~])';
+const RE_BOLD = new RegExp(OPEN_B + '-(?=\\S)([^\\n]*?[^\\s-])-' + CLOSE_B, 'g');
+const RE_HL   = new RegExp(OPEN_B + '=(?=\\S)([^\\n]*?[^\\s=])=' + CLOSE_B, 'g');
+const RE_BOLD1 = new RegExp(OPEN_B + '-([^\\s-])-' + CLOSE_B, 'g');
+const RE_HL1   = new RegExp(OPEN_B + '=([^\\s=])=' + CLOSE_B, 'g');
+
+function applyMarks(line){
+  return line
+    .replace(RE_HL, (m,pre,body)=>pre+HO+body+HC)
+    .replace(RE_HL1, (m,pre,body)=>pre+HO+body+HC)
+    .replace(RE_BOLD, (m,pre,body)=>pre+BO+body+BC)
+    .replace(RE_BOLD1, (m,pre,body)=>pre+BO+body+BC);
+}
+
+function inline(text, isDlg, inlineDlg){
+  let t = text.replace(/\*{1,3}([^*\n]+?)\*{1,3}/g, '$1').replace(/\*/g,''); // RP *action* → narration
+  t = applyMarks(t);
+  let h = esc(t);
+  if(!isDlg && inlineDlg){
+    h = h.replace(/(["“][^"“”\n]{1,400}["”])/g, '<span class="d">$1</span>');
+  }
+  return h.split(BO).join('<b>').split(BC).join('</b>').split(HO).join('<mark>').split(HC).join('</mark>');
+}
+
+function render(text, opts){
+  const paras = text.replace(/\r/g,'').split(/\n\s*\n/).map(p=>p.replace(/^\n+|\n+$/g,'')).filter(p=>p.trim());
+  const out = paras.map(p=>{
+    const lines = p.split('\n');
+    let prevDlg = false;
+    const parts = lines.map(line=>{
+      const isDlg = DLG_START.test(line) || (prevDlg && TR_START.test(line));
+      prevDlg = isDlg;
+      return `<span class="${isDlg?'d':'n'}">${inline(line, isDlg, opts.inlineDlg)}</span>`;
+    });
+    return `<p>${parts.join('<br>')}</p>`;
+  });
+  if(opts.sig) out.push(`<div class="foot">${esc(opts.sig)}</div>`);
+  return out.join('');
+}
+
+function opts(){
+  return { inlineDlg: $('inlineDlg').checked, sig: $('sig').value.trim() };
+}
+function styleCard(el){
+  el.className = 'card' + ($('cardTheme').value==='dark' ? ' dark' : '');
+  el.style.fontFamily = $('font').value;
+  el.style.fontSize = $('size').value + 'px';
+  el.style.setProperty('--c-dlg', $('dlgColor').value);
+  el.style.setProperty('--c-hl', $('hlColor').value);
+}
+function update(){
+  styleCard(preview);
+  preview.innerHTML = render(src.value, opts()) || '<p class="n" style="opacity:.5">미리보기가 여기에 나타나요.</p>';
+}
+src.addEventListener('input', ()=>{ update(); persist(); });
+['cardTheme','font','size','dlgColor','hlColor','inlineDlg','sig'].forEach(id=>$(id).addEventListener('input', update));
+
+// ---------- marking helpers ----------
+function stripMarks(s){ return s.split('\n').map(l=>l.replace(RE_HL,'$1$2').replace(RE_HL1,'$1$2').replace(RE_BOLD,'$1$2').replace(RE_BOLD1,'$1$2')).join('\n'); }
+function insertAtCursor(m){
+  const a = src.selectionStart, b = src.selectionEnd;
+  if(a===b){ src.setRangeText(m+m, a, a, 'end'); src.setSelectionRange(a+1, a+1); }
+  else { const t = src.value.slice(a,b); src.setRangeText(m + t.trim() + m, a, b, 'select'); }
+  src.focus(); update(); persist();
+}
+$('btnUnmark').onclick = ()=>{ src.value = stripMarks(src.value); update(); persist(); };
+$('btnClear').onclick = ()=>{ src.value=''; src.focus(); update(); persist(); };
+src.addEventListener('keydown', e=>{
+  if(!(e.ctrlKey||e.metaKey)) return;
+  const k = e.key.toLowerCase();
+  if(k==='b'){ e.preventDefault(); insertAtCursor('-'); }
+  else if(k==='e'){ e.preventDefault(); insertAtCursor('='); }
+});
+
+function flash(msg){ const r=$("resInfo"); r.textContent=msg; $("results").hidden=false; }
+
+// ---------- export ----------
+let made = []; // {blob,url,name}
+const EXPORT_W = 600, SCALE = 2;
+
+$('btnExport').onclick = async ()=>{
+  if(!window.html2canvas){ flash('이미지 도구를 불러오지 못했어요. 새로고침 후 다시 시도해 주세요.', true); return; }
+  if(!src.value.trim()) return;
+  const btn = $('btnExport'); btn.disabled = true; btn.textContent = '만드는 중…';
+  try{
+    if(document.fonts && document.fonts.ready) await document.fonts.ready;
+    const host = $('exportHost');
+    host.innerHTML = '';
+    const card = document.createElement('div');
+    styleCard(card);
+    card.style.width = EXPORT_W + 'px';
+    card.innerHTML = render(src.value, opts());
+    host.appendChild(card);
+    const bg = getComputedStyle(card).backgroundColor;
+    const full = await html2canvas(card, { scale: SCALE, backgroundColor: bg, logging:false, useCORS:true });
+    // cut points between paragraphs
+    const padTop = parseFloat(getComputedStyle(card).paddingTop);
+    const blocks = [...card.children];
+    const maxH = parseInt($('split').value, 10);
+    const totalH = full.height;
+    const slices = [];
+    if(!maxH || totalH <= maxH){ slices.push([0,totalH]); }
+    else{
+      const cuts = [];
+      for(let i=0;i<blocks.length-1;i++){
+        const a = blocks[i], b = blocks[i+1];
+        const mid = (a.offsetTop + a.offsetHeight + b.offsetTop)/2;
+        cuts.push(Math.round(mid*SCALE));
+      }
+      let start = 0, last = null;
+      for(const c of cuts){
+        if(c - start > maxH && last !== null && last > start){ slices.push([start,last]); start = last; }
+        last = c;
+      }
+      slices.push([start,totalH]);
+    }
+    made.forEach(m=>URL.revokeObjectURL(m.url));
+    made = [];
+    const pad = Math.round(padTop*SCALE);
+    for(let i=0;i<slices.length;i++){
+      const [s,e] = slices[i];
+      const first = i===0, lastS = i===slices.length-1;
+      const extraTop = first?0:pad, extraBot = lastS?0:pad;
+      // strip the half-gap left at the cut so padding looks even
+      const c = document.createElement('canvas');
+      c.width = full.width; c.height = (e-s) + extraTop + extraBot;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = bg; ctx.fillRect(0,0,c.width,c.height);
+      ctx.drawImage(full, 0, s, full.width, e-s, 0, extraTop, full.width, e-s);
+      const blob = await new Promise(r=>c.toBlob(r,'image/png'));
+      const stamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
+      made.push({blob, url:URL.createObjectURL(blob), name:`발췌_${stamp}${slices.length>1?'_'+(i+1):''}.png`});
+    }
+    host.innerHTML = '';
+    showResults();
+    if(made.length===1) saveOne(0);
+  }catch(err){
+    flash('이미지를 만들지 못했어요. 다시 시도해 주세요.', true);
+    console.error(err);
+  }finally{
+    btn.disabled = false; btn.textContent = '이미지로 저장';
+  }
+};
+
+function showResults(){
+  const box = $('thumbs'); box.innerHTML = '';
+  made.forEach((m,i)=>{
+    const d = document.createElement('div'); d.className = 'thumb';
+    const img = new Image(); img.src = m.url; img.alt = `발췌 이미지 ${i+1}`;
+    const b = document.createElement('button'); b.className='btn'; b.textContent = made.length>1 ? `${i+1}번 저장` : '저장';
+    b.onclick = ()=>saveOne(i);
+    d.append(img, b); box.appendChild(d);
+  });
+  $('resInfo').textContent = `${made.length}장 만들었어요 — 저장이 안 되면 이미지를 길게 누르거나 우클릭해서 저장하세요.`;
+  $('btnSaveAll').hidden = made.length < 2;
+  $('results').hidden = false;
+}
+
+async function saveOne(i){
+  const m = made[i]; if(!m) return false;
+  const a = document.createElement('a');
+  a.href = m.url; a.download = m.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  return true;
+}
+$('btnSaveAll').onclick = async ()=>{ for(let i=0;i<made.length;i++){ await saveOne(i); await new Promise(r=>setTimeout(r,400)); } };
+
+update();
+})();
+</script>
+
+</body>
+</html>
