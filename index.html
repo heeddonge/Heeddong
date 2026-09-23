@@ -135,7 +135,7 @@ textarea:focus{outline:none}
           <option value='"Nanum Myeongjo",serif'>명조</option>
           <option value='"Gowun Batang",serif'>바탕</option>
         </select></label>
-        <label>크기 <select id="size"><option>15</option><option selected>16</option><option>17</option><option>18</option></select></label>
+        <label>크기 <input type="range" id="size" min="12" max="28" step="1" value="16" style="width:110px;accent-color:var(--accent)"> <output id="sizeOut" style="min-width:2.6em;font-variant-numeric:tabular-nums;color:var(--ink)">16px</output></label>
         <label>대사색 <input type="color" id="dlgColor" value="#6e9ebf"></label>
         <label>형광펜 <input type="color" id="hlColor" value="#c3e3e3"></label>
         <label><input type="checkbox" id="inlineDlg" checked> 문장 속 "대사"도 색칠</label>
@@ -239,6 +239,7 @@ function update(){
 }
 src.addEventListener('input', ()=>{ update(); persist(); });
 ['cardTheme','font','size','dlgColor','hlColor','inlineDlg','sig'].forEach(id=>$(id).addEventListener('input', update));
+$('size').addEventListener('input', ()=>{ $('sizeOut').textContent = $('size').value + 'px'; });
 
 // ---------- marking helpers ----------
 function stripMarks(s){ return s.split('\n').map(l=>l.replace(RE_HL,'$1$2').replace(RE_HL1,'$1$2').replace(RE_BOLD,'$1$2').replace(RE_BOLD1,'$1$2')).join('\n'); }
