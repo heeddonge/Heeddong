@@ -76,6 +76,9 @@ textarea:focus{outline:none}
 .card .d b{color:inherit}
 .card mark{background:var(--c-hl);color:var(--c-hl-ink);padding:1px 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .card.dark mark{background:color-mix(in srgb,var(--c-hl) 38%,transparent)}
+.card .cut{height:0;margin:0 -40px 1.35em;border-top:2px dashed var(--c-dlg);position:relative;opacity:.8}
+.card .cut::after{content:"✂ 여기서 이미지가 나뉘어요";position:absolute;right:40px;top:-.75em;font:600 11px/1.5 var(--ui);letter-spacing:.02em;font-style:normal;color:var(--c-dlg);background:var(--c-bg);padding:0 6px}
+#exportHost .card .cut{visibility:hidden;border:0;margin:0}
 .card .foot{margin-top:28px;font-size:11px;letter-spacing:.08em;color:color-mix(in srgb,var(--c-ink) 55%,transparent);font-style:normal;text-align:right}
 
 .results{padding:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
@@ -112,6 +115,7 @@ textarea:focus{outline:none}
       <div class="howto">
         <div><code class="k">-문장-</code> 앞뒤로 감싸면 <b>굵게</b></div>
         <div><code class="k">=문장=</code> 앞뒤로 감싸면 <span class="t-h">형광펜</span></div>
+        <div><code class="k">///</code> 한 줄에 이것만 쓰면 거기서 이미지를 나눠요</div>
         <div class="howto-sub">문장 전체든 단어 몇 개든 감싼 만큼 칠해져요. <code>3-4</code>처럼 글자 사이에 붙은 기호는 그대로 둬요.</div>
       </div>
       <textarea id="src" spellcheck="false" aria-label="채팅 지문 입력" placeholder="여기에 채팅 지문을 붙여넣으세요."></textarea>
@@ -139,7 +143,7 @@ textarea:focus{outline:none}
         <label>대사색 <input type="color" id="dlgColor" value="#6e9ebf"></label>
         <label>형광펜 <input type="color" id="hlColor" value="#c3e3e3"></label>
         <label><input type="checkbox" id="inlineDlg" checked> 문장 속 "대사"도 색칠</label>
-        <label>분할 <select id="split"><option value="0">한 장</option><option value="2000">긴 이미지 나누기(짧게)</option><option value="2600" selected>긴 이미지 나누기(보통)</option><option value="3600">긴 이미지 나누기(길게)</option></select></label>
+        <label title="///로 직접 나눈 곳이 있으면 그걸 따라요">자동 분할 <select id="split"><option value="0">한 장</option><option value="2000">긴 이미지 나누기(짧게)</option><option value="2600" selected>긴 이미지 나누기(보통)</option><option value="3600">긴 이미지 나누기(길게)</option></select></label>
         <label>서명 <input id="sig" type="text" placeholder="예: @유유" style="width:90px;border:1px solid var(--line);border-radius:5px;background:var(--panel);padding:3px 6px;font-size:12px"></label>
       </div>
       <div class="stage"><div class="card" id="preview"></div></div>
@@ -166,12 +170,14 @@ const SAMPLE = `(예시 지문 — 비우기를 누르고 붙여넣으세요)
 
 *문을 열고 들어온 이안은 젖은 목도리를 풀었다.* 창밖으로 파도가 한 번 크게 부서졌다. =어떤 빛은 누군가를 부르기 위해서가 아니라, 기다리고 있다는 걸 잊지 않기 위해 켜 두는 것이었다.=
 
+///
+
 "습관이야. 끄는 법을 잊어버렸어."
 
 하윤은 편지를 서랍 안으로 밀어 넣었다. 등대의 빛이 한 바퀴 돌아 =두 사람의 그림자를= 벽 위에 겹쳐 놓았다.`;
 
 // ---------- persistence (per-viewer convenience) ----------
-const KEY = 'excerpt-draft-v2';
+const KEY = 'excerpt-draft-v3';
 try { const s = localStorage.getItem(KEY); src.value = s != null && s.trim() ? s : SAMPLE; } catch(e){ src.value = SAMPLE; }
 let saveT;
 function persist(){ clearTimeout(saveT); saveT = setTimeout(()=>{ try{ localStorage.setItem(KEY, src.value); }catch(e){} }, 400); }
@@ -208,8 +214,13 @@ function inline(text, isDlg, inlineDlg){
 }
 
 function render(text, opts){
-  const paras = text.replace(/\r/g,'').split(/\n\s*\n/).map(p=>p.replace(/^\n+|\n+$/g,'')).filter(p=>p.trim());
-  const out = paras.map(p=>{
+  const CUT = '\uE010';
+  const norm = text.replace(/\r/g,'').replace(/^[ \t]*\/{3,}[ \t]*$/gm, '\n\n'+CUT+'\n\n');
+  const paras = norm.split(/\n\s*\n/).map(p=>p.replace(/^\n+|\n+$/g,'')).filter(p=>p.trim());
+  while(paras.length && paras[0].trim()===CUT) paras.shift();
+  while(paras.length && paras[paras.length-1].trim()===CUT) paras.pop();
+  const out = paras.map((p,i)=>{
+    if(p.trim()===CUT){ return (i>0 && paras[i-1].trim()===CUT) ? '' : '<div class="cut" aria-label="이미지 나누는 곳"></div>'; }
     const lines = p.split('\n');
     let prevDlg = false;
     const parts = lines.map(line=>{
@@ -281,11 +292,20 @@ $('btnExport').onclick = async ()=>{
     const full = await html2canvas(card, { scale: SCALE, backgroundColor: bg, logging:false, useCORS:true });
     // cut points between paragraphs
     const padTop = parseFloat(getComputedStyle(card).paddingTop);
-    const blocks = [...card.children];
+    const blocks = [...card.children].filter(el=>!el.classList.contains('cut'));
+    const forced = [...card.querySelectorAll('.cut')].map(el=>{
+      const a = el.previousElementSibling, b = el.nextElementSibling;
+      return Math.round(((a.offsetTop + a.offsetHeight) + b.offsetTop)/2*SCALE);
+    });
     const maxH = parseInt($('split').value, 10);
     const totalH = full.height;
     const slices = [];
-    if(!maxH || totalH <= maxH){ slices.push([0,totalH]); }
+    if(forced.length){
+      let start = 0;
+      for(const c of forced){ if(c > start){ slices.push([start,c]); start = c; } }
+      slices.push([start,totalH]);
+    }
+    else if(!maxH || totalH <= maxH){ slices.push([0,totalH]); }
     else{
       const cuts = [];
       for(let i=0;i<blocks.length-1;i++){
