@@ -132,7 +132,7 @@ textarea:focus{outline:none}
       </div>
       <textarea id="src" spellcheck="false" aria-label="채팅 지문 입력" placeholder="여기에 채팅 지문을 붙여넣으세요."></textarea>
       <div class="hint">
-        따옴표(<code>"</code> <code>“</code> <code>「</code>)로 시작하는 줄은 대사, 바로 아래 <code>(괄호)</code> 줄은 대사 번역으로 칠해져요. 나머지는 지문.<br>
+        통째로 따옴표(<code>"…"</code> <code>“…”</code> <code>「…」</code>)로 감싼 줄은 대사, 바로 아래 <code>(괄호)</code> 줄은 대사 번역으로 칠해져요. 나머지는 지문.<br>
         <code>*행동*</code> <code>**행동**</code> 같은 별표는 지우고 지문으로 처리해요. 빈 줄로 문단을 나눠요.
       </div>
     </section>
@@ -226,6 +226,29 @@ function persist(){ clearTimeout(saveT); saveT = setTimeout(()=>{ try{ localStor
 // ---------- parsing ----------
 const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const DLG_START = /^\s*[-=]?\s*\**["“”「『‘'«]/;
+const QUOTE_PAIRS = { '"':'"”', '“':'”"', '”':'”"', '「':'」', '『':'』', "'":"'’", '‘':'’\'', '«':'»' };
+// A line is dialogue only when it is made entirely of quoted segments,
+// e.g.  "Hi."  /  "Hi." "Bye."  — not  '반대'라는 단어를…
+function isDlgLine(line){
+  let t = line.replace(/^\s*[-=]?\s*\**/, '').replace(/[\s*=\-]+$/, '');
+  if(!t || !(t[0] in QUOTE_PAIRS)) return false;
+  while(t){
+    const open = t[0], closers = QUOTE_PAIRS[open];
+    if(!closers) return false;
+    let j = -1;
+    for(let k=1;k<t.length;k++){ if(closers.includes(t[k])){ j = k; } }
+    // prefer the first closer that is followed by nothing / punctuation / another quote
+    let ok = -1;
+    for(let k=1;k<t.length;k++){
+      if(!closers.includes(t[k])) continue;
+      const rest = t.slice(k+1).replace(/^[\s.,!?…~。，？！\-=*]+/, '');
+      if(rest === '' || (rest[0] in QUOTE_PAIRS)){ ok = k; break; }
+    }
+    if(ok === -1) return false;
+    t = t.slice(ok+1).replace(/^[\s.,!?…~。，？！\-=*]+/, '');
+  }
+  return true;
+}
 const TR_START = /^\s*[-=]?\s*\**[(（]/;
 // private-use placeholders so markers survive escaping and quote colouring
 const BO='', BC='', HO='', HC='';
@@ -265,7 +288,7 @@ function render(text, opts){
     const lines = p.split('\n');
     let prevDlg = false;
     const parts = lines.map(line=>{
-      const isDlg = DLG_START.test(line) || (prevDlg && TR_START.test(line));
+      const isDlg = isDlgLine(line) || (prevDlg && TR_START.test(line));
       prevDlg = isDlg;
       return `<span class="${isDlg?'d':'n'}">${inline(line, isDlg, opts.inlineDlg)}</span>`;
     });
