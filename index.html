@@ -83,7 +83,7 @@ textarea:focus{outline:none}
 .card .d{color:var(--c-dlg);font-style:normal}
 .card b{font-weight:700;color:var(--c-strong)}
 .card .d b{color:inherit}
-.card mark{background:var(--c-hl-bg,var(--c-hl));color:var(--c-hl-ink);padding:1px 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.card mark{background:linear-gradient(to bottom, transparent var(--hl-gap,0%), var(--c-hl-bg,var(--c-hl)) var(--hl-gap,0%), var(--c-hl-bg,var(--c-hl)) 92%, transparent 92%);color:inherit;padding:0 1px}
 .card .cut{height:0;margin:0 calc(-1 * var(--padx,40px)) 1.35em;border-top:2px dashed var(--c-dlg);position:relative;opacity:.8}
 .card .cut::after{content:"✂ 여기서 이미지가 나뉘어요";position:absolute;right:var(--padx,40px);top:-.75em;font:600 11px/1.5 var(--ui);letter-spacing:.02em;font-style:normal;color:var(--c-dlg);background:var(--c-bg);padding:0 6px}
 #exportHost .card .cut{visibility:hidden;border:0;margin:0}
@@ -158,6 +158,8 @@ textarea:focus{outline:none}
           <label>글자색 <select id="cardTheme"><option value="light">진하게</option><option value="dark">밝게(어두운 배경용)</option></select></label>
           <label>대사색 <input type="color" id="dlgColor" value="#6e9ebf"></label>
           <label>형광펜 <input type="color" id="hlColor" value="#c3e3e3"></label>
+          <label>굵기 <input type="range" id="hlThick" min="20" max="100" step="5" value="55" style="width:80px"> <output id="hlThickOut">55%</output></label>
+          <label>연하기 <input type="range" id="hlOp" min="15" max="100" step="5" value="85" style="width:80px"> <output id="hlOpOut">85%</output></label>
           <label><input type="checkbox" id="inlineDlg" checked> 문장 속 "대사"도 색칠</label>
         </div>
         <div class="opt-group">
@@ -322,7 +324,9 @@ function styleCard(el){
   el.style.textAlign = $('align').value;
   el.style.setProperty('--c-dlg', $('dlgColor').value);
   el.style.setProperty('--c-hl', $('hlColor').value);
-  el.style.setProperty('--c-hl-bg', $('cardTheme').value==='dark' ? hexA($('hlColor').value, .38) : $('hlColor').value);
+  const hop = (+$('hlOp').value)/100 * ($('cardTheme').value==='dark' ? .5 : 1);
+  el.style.setProperty('--c-hl-bg', hexA($('hlColor').value, hop));
+  el.style.setProperty('--hl-gap', (92 - 92*(+$('hlThick').value)/100).toFixed(1) + '%');
   const pad = +$('padX').value;
   el.style.setProperty('--padx', pad + 'px');
   el.style.padding = `${Math.round(pad*1.1)}px ${pad}px`;
@@ -344,9 +348,25 @@ function hexA(hex, a){
 function update(){
   styleCard(preview);
   preview.innerHTML = render(src.value, opts()) || '<p class="n" style="opacity:.5">미리보기가 여기에 나타나요.</p>';
+  splitMarks(preview);
+}
+// One <mark> per word, so a highlight that wraps onto several lines is drawn
+// line by line (the image renderer would otherwise paint one big box).
+function splitMarks(root){
+  root.querySelectorAll('mark:not(.w)').forEach(m=>{
+    const walker = document.createTreeWalker(m, NodeFilter.SHOW_TEXT);
+    const nodes = []; while(walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(tn=>{
+      const parts = tn.nodeValue.match(/\S+\s*|\s+/g) || [];
+      const frag = document.createDocumentFragment();
+      parts.forEach(t=>{ const w = document.createElement('mark'); w.className = 'w'; w.textContent = t; frag.appendChild(w); });
+      tn.parentNode.replaceChild(frag, tn);
+    });
+    m.replaceWith(...m.childNodes);
+  });
 }
 src.addEventListener('input', ()=>{ update(); persist(); });
-const SET_IDS = ['cardTheme','font','size','lh','align','dlgColor','hlColor','inlineDlg','split','shape','padX','bgColor','bgVeil','credit','creditPos','creditSize','creditColor','creditOp','creditBold','creditItalic'];
+const SET_IDS = ['cardTheme','font','size','lh','align','dlgColor','hlColor','hlThick','hlOp','inlineDlg','split','shape','padX','bgColor','bgVeil','credit','creditPos','creditSize','creditColor','creditOp','creditBold','creditItalic'];
 const SKEY = 'excerpt-settings-v1', IKEY = 'excerpt-bgimg-v1';
 let bgImage = null;
 function syncOutputs(){
@@ -354,6 +374,8 @@ function syncOutputs(){
   $('lhOut').textContent = Number($('lh').value).toFixed(2);
   $('padOut').textContent = $('padX').value + 'px';
   $('veilOut').textContent = $('bgVeil').value + '%';
+  $('hlThickOut').textContent = $('hlThick').value + '%';
+  $('hlOpOut').textContent = $('hlOp').value + '%';
   $('creditSizeOut').textContent = $('creditSize').value + 'px';
   $('creditOpOut').textContent = $('creditOp').value + '%';
   $('bgImgCtl').hidden = !bgImage;
@@ -430,6 +452,7 @@ $('btnExport').onclick = async ()=>{
     const meas = document.createElement('div');
     styleCard(meas); meas.style.width = W + 'px'; meas.style.maxWidth = 'none';
     meas.innerHTML = render(src.value, { ...opts(), feet:false });
+    splitMarks(meas);
     host.appendChild(meas);
     const kids = [...meas.children];
     let groups = [[]];
